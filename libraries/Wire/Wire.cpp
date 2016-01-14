@@ -47,10 +47,19 @@ void TwoWire::begin(uint8_t address) {
   //Slave mode
   sercom->initSlaveWIRE(address);
   sercom->enableWIRE();
+
+  pinPeripheral(_uc_pinSDA, g_APinDescription[_uc_pinSDA].ulPinType);
+  pinPeripheral(_uc_pinSCL, g_APinDescription[_uc_pinSCL].ulPinType);
 }
 
-void TwoWire::setClock(uint32_t frequency) {
-	// dummy funtion
+void TwoWire::setClock(uint32_t baudrate) {
+  sercom->disableWIRE();
+  sercom->initMasterWIRE(baudrate);
+  sercom->enableWIRE();
+}
+
+void TwoWire::end() {
+  sercom->disableWIRE();
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, size_t quantity, bool stopBit)
@@ -76,7 +85,11 @@ uint8_t TwoWire::requestFrom(uint8_t address, size_t quantity, bool stopBit)
     }
     sercom->prepareNackBitWIRE();                           // Prepare NACK to stop slave transmission
     //sercom->readDataWIRE();                               // Clear data register to send NACK
-    sercom->prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);   // Send Stop
+
+    if (stopBit)
+    {
+      sercom->prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);   // Send Stop
+    }
   }
 
   return byteRead;
@@ -105,12 +118,6 @@ uint8_t TwoWire::endTransmission(bool stopBit)
 {
   transmissionBegun = false ;
 
-  // Check if there are data to send
-  if ( txBuffer.available() == 0)
-  {
-    return 4 ;
-  }
-
   // Start I2C transmission
   if ( !sercom->startTransmissionWIRE( txAddress, WIRE_WRITE_FLAG ) )
   {
@@ -128,7 +135,11 @@ uint8_t TwoWire::endTransmission(bool stopBit)
       return 3 ;  // Nack or error
     }
   }
-  sercom->prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
+  
+  if (stopBit)
+  {
+    sercom->prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
+  }   
 
   return 0;
 }
@@ -212,29 +223,31 @@ void TwoWire::onService(void)
 {
   if ( sercom->isSlaveWIRE() )
   {
-    //Received data
-    if(sercom->isDataReadyWIRE())
+    if(sercom->isStopDetectedWIRE() || 
+        (sercom->isAddressMatch() && sercom->isRestartDetectedWIRE() && !sercom->isMasterReadOperationWIRE())) //Stop or Restart detected
     {
-      //Store data
-      rxBuffer.store_char(sercom->readDataWIRE());
+      sercom->prepareAckBitWIRE();
+      sercom->prepareCommandBitsWire(0x03);
 
-      //Stop or Restart detected
-      if(sercom->isStopDetectedWIRE() || sercom->isRestartDetectedWIRE())
+      //Calling onReceiveCallback, if exists
+      if(onReceiveCallback)
       {
-        //Calling onReceiveCallback, if exists
-        if(onReceiveCallback)
-        {
-          onReceiveCallback(available());
-        }
+        onReceiveCallback(available());
       }
+      
+      rxBuffer.clear();
     }
-
-    //Address Match
-    if(sercom->isAddressMatch())
+    else if(sercom->isAddressMatch())  //Address Match
     {
-      //Is a request ?
-      if(sercom->isMasterReadOperationWIRE())
+      sercom->prepareAckBitWIRE();
+      sercom->prepareCommandBitsWire(0x03);
+
+      if(sercom->isMasterReadOperationWIRE()) //Is a request ?
       {
+        // wait for data ready flag,
+        // before calling request callback
+        while(!sercom->isDataReadyWIRE());
+
         //Calling onRequestCallback, if exists
         if(onRequestCallback)
         {
@@ -242,26 +255,76 @@ void TwoWire::onService(void)
         }
       }
     }
+    else if(sercom->isDataReadyWIRE()) //Received data
+    {
+      if (rxBuffer.isFull()) {
+        sercom->prepareNackBitWIRE(); 
+      } else {
+        //Store data
+        rxBuffer.store_char(sercom->readDataWIRE());
+
+        sercom->prepareAckBitWIRE(); 
+      }
+
+      sercom->prepareCommandBitsWire(0x03);
+    }
   }
 }
 
 #if WIRE_INTERFACES_COUNT > 0
+  /* In case new variant doesn't define these macros,
+   * we put here the ones for Arduino Zero.
+   *
+   * These values should be different on some variants!
+   */
+  #ifndef PERIPH_WIRE
+    #define PERIPH_WIRE          sercom3
+    #define WIRE_IT_HANDLER      SERCOM3_Handler
+  #endif // PERIPH_WIRE
+  TwoWire Wire(&PERIPH_WIRE, PIN_WIRE_SDA, PIN_WIRE_SCL);
 
-/* In case new variant doesn't define these macros,
- * we put here the ones for Arduino Zero.
- *
- * These values should be different on some variants!
- */
+  void WIRE_IT_HANDLER(void) {
+    Wire.onService();
+  }
+#endif
 
-#ifndef PERIPH_WIRE
-#  define PERIPH_WIRE          sercom3
-#  define WIRE_IT_HANDLER      SERCOM3_Handler
-#endif // PERIPH_WIRE
+#if WIRE_INTERFACES_COUNT > 1
+  TwoWire Wire1(&PERIPH_WIRE1, PIN_WIRE1_SDA, PIN_WIRE1_SCL);
 
-TwoWire Wire(&PERIPH_WIRE, PIN_WIRE_SDA, PIN_WIRE_SCL);
+  void WIRE1_IT_HANDLER(void) {
+    Wire1.onService();
+  }
+#endif
 
-void WIRE_IT_HANDLER(void) {
-  Wire.onService();
-}
+#if WIRE_INTERFACES_COUNT > 2
+  TwoWire Wire2(&PERIPH_WIRE2, PIN_WIRE2_SDA, PIN_WIRE2_SCL);
 
-#endif // WIRE_INTERFACES_COUNT > 0
+  void WIRE2_IT_HANDLER(void) {
+    Wire2.onService();
+  }
+#endif
+
+#if WIRE_INTERFACES_COUNT > 3
+  TwoWire Wire3(&PERIPH_WIRE3, PIN_WIRE3_SDA, PIN_WIRE3_SCL);
+
+  void WIRE3_IT_HANDLER(void) {
+    Wire3.onService();
+  }
+#endif
+
+#if WIRE_INTERFACES_COUNT > 4
+  TwoWire Wire4(&PERIPH_WIRE4, PIN_WIRE4_SDA, PIN_WIRE4_SCL);
+
+  void WIRE4_IT_HANDLER(void) {
+    Wire4.onService();
+  }
+#endif
+
+#if WIRE_INTERFACES_COUNT > 5
+  TwoWire Wire5(&PERIPH_WIRE5, PIN_WIRE5_SDA, PIN_WIRE5_SCL);
+
+  void WIRE5_IT_HANDLER(void) {
+    Wire5.onService();
+  }
+#endif
+

@@ -28,13 +28,17 @@
 
 #define BUFFER_LENGTH 32
 
+ // WIRE_HAS_END means Wire has end()
+#define WIRE_HAS_END 1
+
 class TwoWire : public Stream
 {
   public:
     TwoWire(SERCOM *s, uint8_t pinSDA, uint8_t pinSCL);
     void begin();
     void begin(uint8_t);
-    void setClock(uint32_t); // dummy function
+    void end();
+    void setClock(uint32_t);
 
     void beginTransmission(uint8_t);
     uint8_t endTransmission(bool stopBit);

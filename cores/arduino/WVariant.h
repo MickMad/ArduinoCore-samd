@@ -37,7 +37,18 @@ typedef enum _EAnalogChannel
   ADC_Channel5=5,
   ADC_Channel6=6,
   ADC_Channel7=7,
+#if defined __SAMD21J18A__
+  ADC_Channel8=8,
+  ADC_Channel9=9,
+#endif // __SAMD21J18A__
   ADC_Channel10=10,
+  ADC_Channel11=11,
+#if defined __SAMD21J18A__
+  ADC_Channel12=12,
+  ADC_Channel13=13,
+  ADC_Channel14=14,
+  ADC_Channel15=15,
+#endif // __SAMD21J18A__
   ADC_Channel16=16,
   ADC_Channel17=17,
   ADC_Channel18=18,
@@ -59,15 +70,23 @@ typedef enum _ETCChannel
   TCC0_CH7 = (0<<8)|(3), // Channel 7 is 3!
   TCC1_CH0 = (1<<8)|(0),
   TCC1_CH1 = (1<<8)|(1),
+  TCC1_CH2 = (1<<8)|(0), // Channel 2 is 0!
+  TCC1_CH3 = (1<<8)|(1), // Channel 3 is 1!
   TCC2_CH0 = (2<<8)|(0),
   TCC2_CH1 = (2<<8)|(1),
+  TCC2_CH2 = (2<<8)|(0), // Channel 2 is 0!
+  TCC2_CH3 = (2<<8)|(1), // Channel 3 is 1!
   TC3_CH0  = (3<<8)|(0),
   TC3_CH1  = (3<<8)|(1),
+  TC4_CH0  = (4<<8)|(0),
+  TC4_CH1  = (4<<8)|(1),
   TC5_CH0  = (5<<8)|(0),
   TC5_CH1  = (5<<8)|(1),
 #if defined __SAMD21J18A__
+  TC6_CH0  = (6<<8)|(0),
+  TC6_CH1  = (6<<8)|(1),
   TC7_CH0  = (7<<8)|(0),
-  TC7_CH1  = (7<<8)|(1)
+  TC7_CH1  = (7<<8)|(1),
 #endif // __SAMD21J18A__
 } ETCChannel ;
 
@@ -91,15 +110,23 @@ typedef enum _EPWMChannel
   PWM0_CH7=TCC0_CH7,
   PWM1_CH0=TCC1_CH0,
   PWM1_CH1=TCC1_CH1,
+  PWM1_CH2=TCC1_CH2,
+  PWM1_CH3=TCC1_CH3,
   PWM2_CH0=TCC2_CH0,
   PWM2_CH1=TCC2_CH1,
+  PWM2_CH2=TCC2_CH2,
+  PWM2_CH3=TCC2_CH3,
   PWM3_CH0=TC3_CH0,
   PWM3_CH1=TC3_CH1,
+  PWM4_CH0=TC4_CH0,
+  PWM4_CH1=TC4_CH1,
   PWM5_CH0=TC5_CH0,
   PWM5_CH1=TC5_CH1,
 #if defined __SAMD21J18A__
+  PWM6_CH0=TC6_CH0,
+  PWM6_CH1=TC6_CH1,
   PWM7_CH0=TC7_CH0,
-  PWM7_CH1=TC7_CH1
+  PWM7_CH1=TC7_CH1,
 #endif // __SAMD21J18A__
 } EPWMChannel ;
 
@@ -111,25 +138,25 @@ typedef enum _EPortType
   PORTC=2,
 } EPortType ;
 
-typedef enum _EExt_Interrupts
+typedef enum
 {
-  EXTERNAL_INT_0 = 0, // Available on pin 11
-  EXTERNAL_INT_1, // Available on pin 13
-  EXTERNAL_INT_2, // Available on pins 10, A0, A5
-  EXTERNAL_INT_3, // Available on pin 12
-  EXTERNAL_INT_4, // Available on pin 6, 8, A3
-  EXTERNAL_INT_5, // Available on pin 7, 9, A4
-  EXTERNAL_INT_6, // Available on pin 16
-  EXTERNAL_INT_7, // Available on pin 17
-  EXTERNAL_INT_8, // Available on pin A1
-  EXTERNAL_INT_9, // Available on pin 3, A2
-  EXTERNAL_INT_10, // Available on pin 0, 21
-  EXTERNAL_INT_11, // Available on pin 1, 20
-  EXTERNAL_INT_12, // Available on pin 18
-  EXTERNAL_INT_13, // Available on pin EDBG_GPIO0 (43)
-  EXTERNAL_INT_14, // Available on pin 4
-  EXTERNAL_INT_15, // Available on pin 5
-  EXTERNAL_INT_NMI, // Available on pin 2
+  EXTERNAL_INT_0 = 0,
+  EXTERNAL_INT_1,
+  EXTERNAL_INT_2,
+  EXTERNAL_INT_3,
+  EXTERNAL_INT_4,
+  EXTERNAL_INT_5,
+  EXTERNAL_INT_6,
+  EXTERNAL_INT_7,
+  EXTERNAL_INT_8,
+  EXTERNAL_INT_9,
+  EXTERNAL_INT_10,
+  EXTERNAL_INT_11,
+  EXTERNAL_INT_12,
+  EXTERNAL_INT_13,
+  EXTERNAL_INT_14,
+  EXTERNAL_INT_15,
+  EXTERNAL_INT_NMI,
   EXTERNAL_NUM_INTERRUPTS,
   NOT_AN_INTERRUPT = -1,
   EXTERNAL_INT_NONE = NOT_AN_INTERRUPT,
@@ -167,7 +194,8 @@ typedef enum _EPioType
 #define PIN_ATTR_DIGITAL       (1UL<<2)
 #define PIN_ATTR_PWM           (1UL<<3)
 #define PIN_ATTR_TIMER         (1UL<<4)
-#define PIN_ATTR_EXTINT        (1UL<<5)
+#define PIN_ATTR_TIMER_ALT     (1UL<<5)
+#define PIN_ATTR_EXTINT        (1UL<<6)
 
 /* Types used for the table below */
 typedef struct _PinDescription

@@ -43,28 +43,21 @@ void SERCOM::initUART(SercomUartMode mode, SercomUartSampleRate sampleRate, uint
 
   if ( mode == UART_INT_CLOCK )
   {
-    uint16_t sampleRateValue ;
+    uint16_t sampleRateValue;
 
-    if ( sampleRate == SAMPLE_RATE_x16 )
-    {
-      sampleRateValue = 16 ;
-    }
-    else
-    {
-      if ( sampleRate == SAMPLE_RATE_x8 )
-      {
-        sampleRateValue = 8 ;
-      }
-      else
-      {
-        sampleRateValue = 3 ;
-      }
+    if (sampleRate == SAMPLE_RATE_x16) {
+      sampleRateValue = 16;
+    } else {
+      sampleRateValue = 8;
     }
 
-    // Asynchronous arithmetic mode
-    // 65535 * ( 1 - sampleRateValue * baudrate / SystemCoreClock);
-    // 65535 - 65535 * (sampleRateValue * baudrate / SystemCoreClock));
-    sercom->USART.BAUD.reg = 65535.0f * ( 1.0f - (float)(sampleRateValue) * (float)(baudrate) / (float)(SystemCoreClock));
+    // Asynchronous fractional mode (Table 24-2 in datasheet)
+    //   BAUD = fref / (sampleRateValue * fbaud)
+    // (multiply by 8, to calculate fractional piece)
+    uint32_t baudTimes8 = (SystemCoreClock * 8) / (sampleRateValue * baudrate);
+
+    sercom->USART.BAUD.FRAC.FP   = (baudTimes8 % 8);
+    sercom->USART.BAUD.FRAC.BAUD = (baudTimes8 / 8);
   }
 }
 void SERCOM::initFrame(SercomUartCharSize charSize, SercomDataOrder dataOrder, SercomParityMode parityMode, SercomNumberStopBit nbStopBits)
@@ -262,6 +255,11 @@ void SERCOM::setDataOrderSPI(SercomDataOrder dataOrder)
   enableSPI();
 }
 
+SercomDataOrder SERCOM::getDataOrderSPI()
+{
+  return (sercom->SPI.CTRLA.bit.DORD ? LSB_FIRST : MSB_FIRST);
+}
+
 void SERCOM::setBaudrateSPI(uint8_t divider)
 {
   //Can't divide by 0
@@ -410,14 +408,12 @@ void SERCOM::initSlaveWIRE( uint8_t ucAddress )
   // Set slave mode
   sercom->I2CS.CTRLA.bit.MODE = I2C_SLAVE_OPERATION ;
 
-  // Enable Quick Command
-  sercom->I2CM.CTRLB.bit.QCEN = 1 ;
-
   sercom->I2CS.ADDR.reg = SERCOM_I2CS_ADDR_ADDR( ucAddress & 0x7Ful ) | // 0x7F, select only 7 bits
                           SERCOM_I2CS_ADDR_ADDRMASK( 0x3FFul ) ;    // 0x3FF all bits set
 
   // Set the interrupt register
-  sercom->I2CS.INTENSET.reg = SERCOM_I2CS_INTENSET_AMATCH | // Address Match
+  sercom->I2CS.INTENSET.reg = SERCOM_I2CS_INTENSET_PREC |   // Stop
+                              SERCOM_I2CS_INTENSET_AMATCH | // Address Match
                               SERCOM_I2CS_INTENSET_DRDY ;   // Data Ready
 
   while ( sercom->I2CM.SYNCBUSY.bit.SYSOP != 0 )
@@ -450,23 +446,35 @@ void SERCOM::initMasterWIRE( uint32_t baudrate )
 
 void SERCOM::prepareNackBitWIRE( void )
 {
-  // Send a NACK
-  sercom->I2CM.CTRLB.bit.ACKACT = 1;
+  if(isMasterWIRE()) {
+    // Send a NACK
+    sercom->I2CM.CTRLB.bit.ACKACT = 1;
+  } else {
+    sercom->I2CS.CTRLB.bit.ACKACT = 1;
+  }
 }
 
 void SERCOM::prepareAckBitWIRE( void )
 {
-  // Send an ACK
-  sercom->I2CM.CTRLB.bit.ACKACT = 0;
+  if(isMasterWIRE()) {
+    // Send an ACK
+    sercom->I2CM.CTRLB.bit.ACKACT = 0;
+  } else {
+    sercom->I2CS.CTRLB.bit.ACKACT = 0;
+  }
 }
 
-void SERCOM::prepareCommandBitsWire(SercomMasterCommandWire cmd)
+void SERCOM::prepareCommandBitsWire(uint8_t cmd)
 {
-  sercom->I2CM.CTRLB.bit.CMD = cmd;
+  if(isMasterWIRE()) {
+    sercom->I2CM.CTRLB.bit.CMD = cmd;
 
-  while(sercom->I2CM.SYNCBUSY.bit.SYSOP)
-  {
-    // Waiting for synchronization
+    while(sercom->I2CM.SYNCBUSY.bit.SYSOP)
+    {
+      // Waiting for synchronization
+    }
+  } else {
+    sercom->I2CS.CTRLB.bit.CMD = cmd;
   }
 }
 
@@ -475,8 +483,8 @@ bool SERCOM::startTransmissionWIRE(uint8_t address, SercomWireReadWriteFlag flag
   // 7-bits address + 1-bits R/W
   address = (address << 0x1ul) | flag;
 
-  // Wait idle bus mode
-  while ( !isBusIdleWIRE() );
+  // Wait idle or owner bus mode
+  while ( !isBusIdleWIRE() && !isBusOwnerWIRE() );
 
   // Send start and address
   sercom->I2CM.ADDR.bit.ADDR = address;
@@ -568,6 +576,11 @@ bool SERCOM::isSlaveWIRE( void )
 bool SERCOM::isBusIdleWIRE( void )
 {
   return sercom->I2CM.STATUS.bit.BUSSTATE == WIRE_IDLE_STATE;
+}
+
+bool SERCOM::isBusOwnerWIRE( void )
+{
+  return sercom->I2CM.STATUS.bit.BUSSTATE == WIRE_OWNER_STATE;
 }
 
 bool SERCOM::isDataReadyWIRE( void )
