@@ -1,6 +1,7 @@
 /*
   Copyright (c) 2015 Arduino LLC.  All right reserved.
   Copyright (c) 2015 Atmel Corporation/Thibaut VIARD.  All right reserved.
+  Copyright (c) 2016 Michele Perla.  All right reserved.
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -38,8 +39,8 @@ const char devDescriptor[] =
   0x00,   // bDeviceSubclass: CDC class sub code
   0x00,   // bDeviceProtocol: CDC Device protocol
   0x40,   // bMaxPacketSize0
-  0x41,   // idVendor L
-  0x23,   // idVendor H
+  0x09,   // idVendor L
+  0x12,   // idVendor H
   USB_PID_LOW,   // idProduct L
   USB_PID_HIGH,  // idProduct H
   0x00,   // bcdDevice L, here matching SAM-BA version
@@ -152,11 +153,11 @@ char cfgDescriptor[] =
 };
 
 #ifndef STRING_MANUFACTURER
-#  define STRING_MANUFACTURER "Arduino LLC"
+#  define STRING_MANUFACTURER "Hackaday / Michele Perla"
 #endif
 
 #ifndef STRING_PRODUCT
-#  define STRING_PRODUCT "Arduino Zero"
+#  define STRING_PRODUCT "HACK"
 #endif
 
 USB_CDC sam_ba_cdc;
