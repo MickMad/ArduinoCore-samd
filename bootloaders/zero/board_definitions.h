@@ -1,8 +1,7 @@
 /*
   Copyright (c) 2015 Arduino LLC.  All right reserved.
   Copyright (c) 2015 Atmel Corporation/Thibaut VIARD.  All right reserved.
-  Copyright (c) 2016 Michele Perla. All right reserved.
-  
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -43,11 +42,11 @@
 #define BOOT_USART_MODULE                 SERCOM0
 #define BOOT_USART_BUS_CLOCK_INDEX        PM_APBCMASK_SERCOM0
 #define BOOT_USART_PER_CLOCK_INDEX        GCLK_ID_SERCOM0_CORE
-#define BOOT_USART_PAD_SETTINGS           UART_RX_PAD1_TX_PAD0
-#define BOOT_USART_PAD3                   PINMUX_UNUSED
-#define BOOT_USART_PAD2                   PINMUX_UNUSED
-#define BOOT_USART_PAD1                   PINMUX_PA09C_SERCOM0_PAD1
-#define BOOT_USART_PAD0                   PINMUX_PA08C_SERCOM0_PAD0
+#define BOOT_USART_PAD_SETTINGS           UART_RX_PAD3_TX_PAD2
+#define BOOT_USART_PAD3                   PINMUX_PA11C_SERCOM0_PAD3
+#define BOOT_USART_PAD2                   PINMUX_PA10C_SERCOM0_PAD2
+#define BOOT_USART_PAD1                   PINMUX_UNUSED
+#define BOOT_USART_PAD0                   PINMUX_UNUSED
 
 /* Frequency of the board main oscillator */
 #define VARIANT_MAINOSC	                  (32768ul)
@@ -62,14 +61,12 @@
  * LEDs definitions
  */
 #define BOARD_LED_PORT                    (0)
-#define BOARD_LED_PIN                     (28)
+#define BOARD_LED_PIN                     (17)
 
-/*
 #define BOARD_LEDRX_PORT                  (1)
 #define BOARD_LEDRX_PIN                   (3)
 
 #define BOARD_LEDTX_PORT                  (0)
 #define BOARD_LEDTX_PIN                   (27)
-*/
 
 #endif // _BOARD_DEFINITIONS_H_

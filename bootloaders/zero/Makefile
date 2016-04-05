@@ -1,6 +1,5 @@
 # Copyright (c) 2015 Atmel Corporation/Thibaut VIARD.  All right reserved.
 # Copyright (c) 2015 Arduino LLC.  All right reserved.
-# Copyright (c) 2016 Michele Perla.  All right reserved.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -75,10 +74,8 @@ else
 CFLAGS+=-Os -DDEBUG=0
 endif
 
-# HACK (PID == 0x813A)
-CFLAGS_EXTRA?=-D__SAMD21E18A__ -DUSB_PID_HIGH=0x81 -DUSB_PID_LOW=0x3A
 # Arduino Zero (PID == 0x004D)
-# CFLAGS_EXTRA?=-D__SAMD21G18A__ -DUSB_PID_HIGH=0x00 -DUSB_PID_LOW=0x4D
+CFLAGS_EXTRA?=-D__SAMD21G18A__ -DUSB_PID_HIGH=0x00 -DUSB_PID_LOW=0x4D
 # Genuino Zero (PID == 0x024D)
 # CFLAGS_EXTRA?=-D__SAMD21G18A__ -DUSB_PID_HIGH=0x02 -DUSB_PID_LOW=0x4D
 
