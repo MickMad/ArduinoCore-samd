@@ -113,8 +113,8 @@ static const uint8_t SWCLK = PIN_SWCLK;
  * Serial interfaces
  */
 // Serial
-#define PIN_SERIAL_RX       (0ul)
-#define PIN_SERIAL_TX       (1ul)
+#define PIN_SERIAL_TX       (0ul)
+#define PIN_SERIAL_RX       (1ul)
 #define PAD_SERIAL_TX       (UART_TX_PAD_0)
 #define PAD_SERIAL_RX       (SERCOM_RX_PAD_1)
 
@@ -124,14 +124,14 @@ static const uint8_t SWCLK = PIN_SWCLK;
 #define SPI_INTERFACES_COUNT 1
 
 #define PIN_SPI_MISO         (6u)
-#define PIN_SPI_SCK          (7u)
-#define PIN_SPI_SS           (8u)
-#define PIN_SPI_MOSI         (9u)
+#define PIN_SPI_SS           (7u)
+#define PIN_SPI_MOSI         (8u)
+#define PIN_SPI_SCK          (9u)
 #define PERIPH_SPI           sercom1
 #define PAD_SPI_TX           SPI_PAD_2_SCK_3
 #define PAD_SPI_RX           SERCOM_RX_PAD_0
 
-static const uint8_t SS	  = PIN_SPI_SS ;	// SERCOM4 last PAD is present on A2 but HW SS isn't used. Set here only for reference.
+static const uint8_t SS	  = PIN_SPI_SS ;	// SERCOM1 last PAD is present on pin 7 but HW SS isn't used. Set here only for reference.
 static const uint8_t MOSI = PIN_SPI_MOSI ;
 static const uint8_t MISO = PIN_SPI_MISO ;
 static const uint8_t SCK  = PIN_SPI_SCK ;
